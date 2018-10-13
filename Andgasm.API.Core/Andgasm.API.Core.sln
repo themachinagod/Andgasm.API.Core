@@ -9,7 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Andgasm.API.Core.Tests", "A
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Artifacts", "Artifacts", "{8A8B7509-7D80-44AB-A60B-B41B4C9FD7A8}"
 	ProjectSection(SolutionItems) = preProject
-		Andgasm.API.Core\obj\Release\Andgasm.API.Core.0.0.1.nuspec = Andgasm.API.Core\obj\Release\Andgasm.API.Core.0.0.1.nuspec
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
@@ -33,17 +32,5 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {21A2214A-7F6B-4A63-94B3-E6DA9CD3BC6B}
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://andgasm.visualstudio.com/
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = Andgasm.API.Core\\Andgasm.API.Core.csproj
-		SccProjectName1 = Andgasm.API.Core
-		SccLocalPath1 = Andgasm.API.Core
-		SccProjectUniqueName2 = Andgasm.API.Core.Tests\\Andgasm.API.Core.Tests.csproj
-		SccProjectName2 = Andgasm.API.Core.Tests
-		SccLocalPath2 = Andgasm.API.Core.Tests
 	EndGlobalSection
 EndGlobal
