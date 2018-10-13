@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <Version>0.0.1</Version>
+    <Authors>Danny Brown</Authors>
+    <Company>Andgasm Software Solutions</Company>
+    <Description>Core lib for Asp Net Core API extensions.</Description>
+    <Copyright>Andgasm Software Solutions</Copyright>
+    <PackageTags>AspNetCore, API, Base, Reportable</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="5.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.1.3" />
+  </ItemGroup>
+
+</Project>

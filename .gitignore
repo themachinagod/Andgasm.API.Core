@@ -3,3 +3,6 @@
 ################################################################################
 
 /Andgasm.API.Core/Andgasm.API.Core.Tests/obj
+/Andgasm.API.Core/Andgasm.API.Core/obj
+/Andgasm.API.Core/.vs/Andgasm.API.Core
+/.vs

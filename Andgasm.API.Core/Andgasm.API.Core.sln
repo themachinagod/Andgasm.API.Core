@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2041
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Andgasm.API.Core", "Andgasm.API.Core\Andgasm.API.Core.csproj", "{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Andgasm.API.Core.Tests", "Andgasm.API.Core.Tests\Andgasm.API.Core.Tests.csproj", "{C0740905-D9E2-492E-AC3B-E02E3CE278BE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Artifacts", "Artifacts", "{8A8B7509-7D80-44AB-A60B-B41B4C9FD7A8}"
+	ProjectSection(SolutionItems) = preProject
+		Andgasm.API.Core\obj\Release\Andgasm.API.Core.0.0.1.nuspec = Andgasm.API.Core\obj\Release\Andgasm.API.Core.0.0.1.nuspec
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {21A2214A-7F6B-4A63-94B3-E6DA9CD3BC6B}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://andgasm.visualstudio.com/
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = Andgasm.API.Core\\Andgasm.API.Core.csproj
+		SccProjectName1 = Andgasm.API.Core
+		SccLocalPath1 = Andgasm.API.Core
+		SccProjectUniqueName2 = Andgasm.API.Core.Tests\\Andgasm.API.Core.Tests.csproj
+		SccProjectName2 = Andgasm.API.Core.Tests
+		SccLocalPath2 = Andgasm.API.Core.Tests
+	EndGlobalSection
+EndGlobal
