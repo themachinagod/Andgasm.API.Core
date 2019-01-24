@@ -1,23 +1,29 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Andgasm.API.Core
 {
     public class ReportableControllerBase : ControllerBase
     {
+        #region Properties
         protected ILogger _logger { get; set; }
         protected IMapper _datamap { get; set; }
         protected DynamicExpressionService _reporting { get; set; }
+        #endregion
 
+        #region Constructors
         public ReportableControllerBase(IMapper datamap, DynamicExpressionService expsvc, ILogger<ReportableControllerBase> logger) : base()
         {
             _datamap = datamap;
             _reporting = expsvc;
             _logger = logger;
         }
+        #endregion
 
+        #region Dynamic Expression Parsers
         public IQueryable<T> GetQueryForReportOptions<T, S>(IQueryable<T> queryroot, ReportOptions options)
         {
             if (options.filter != null && options.filter.Count() > 0)
@@ -76,5 +82,18 @@ namespace Andgasm.API.Core
             }
             return null;
         }
+        #endregion
+
+        #region Mapping Helpers
+        private T MapToResource<T>(T rate)
+        {
+            return _datamap.Map<T>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+        }
+
+        private List<T> MapToResource<T>(List<T> rate)
+        {
+            return _datamap.Map<List<T>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+        }
+        #endregion
     }
 }

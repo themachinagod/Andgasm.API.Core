@@ -9,12 +9,14 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>0.0.4</Version>
+    <Version>0.0.7</Version>
     <Authors>Danny Brown</Authors>
     <Company>Andgasm Software Solutions</Company>
-    <Description>The Andgasm API.Core library provides generalised base classes that can be utilised by any Web API controller</Description>
+    <Description>The Andgasm API.Core library provides generalised base classes that can be utilised by any Web API controller;
+Dynamic Expression Parsing
+Mapping Helpers</Description>
     <Copyright>Andgasm Software Solutions</Copyright>
-    <PackageTags>AspNetCore, API, Base, Reportable, EventGrid</PackageTags>
+    <PackageTags>AspNetCore, API, Base, Reportable, EventGrid, Dynamics, Mapping</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/themachinagod/Andgasm.API.Core</RepositoryUrl>
