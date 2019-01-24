@@ -85,14 +85,14 @@ namespace Andgasm.API.Core
         #endregion
 
         #region Mapping Helpers
-        protected T MapToResource<T>(T rate)
+        protected S MapToResource<T, S>(T rate)
         {
-            return _datamap.Map<T>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+            return _datamap.Map<S>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
         }
 
-        protected List<T> MapToResource<T>(List<T> rate)
+        protected List<S> MapToResource<T, S>(List<T> rate)
         {
-            return _datamap.Map<List<T>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+            return _datamap.Map<List<S>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
         }
         #endregion
     }
