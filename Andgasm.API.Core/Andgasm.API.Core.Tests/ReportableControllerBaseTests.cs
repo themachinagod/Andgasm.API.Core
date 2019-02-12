@@ -90,7 +90,7 @@ namespace Andgasm.API.Core.Tests
             var mapper = MockMapper();
             _controller = new ReportableControllerBase(mapper,
                                                        new DynamicExpressionService(new NullLogger<DynamicExpressionService>()),
-                                                       new NullLogger<ReportableControllerBase>());
+                                                       new NullLogger<ReportableControllerBase>(), null); // DBr: null dbcontext is WRONG!!
         }
 
         private void MockData()

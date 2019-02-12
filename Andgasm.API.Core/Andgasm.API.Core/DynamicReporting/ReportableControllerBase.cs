@@ -1,25 +1,30 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Andgasm.API.Core
 {
     public class ReportableControllerBase : ControllerBase
     {
         #region Properties
+        protected DbContext _dbContext;
         protected ILogger _logger { get; set; }
         protected IMapper _datamap { get; set; }
         protected DynamicExpressionService _reporting { get; set; }
         #endregion
 
         #region Constructors
-        public ReportableControllerBase(IMapper datamap, DynamicExpressionService expsvc, ILogger<ReportableControllerBase> logger) : base()
+        public ReportableControllerBase(IMapper datamap, DynamicExpressionService expsvc, ILogger<ReportableControllerBase> logger, DbContext dbcontext) : base()
         {
             _datamap = datamap;
             _reporting = expsvc;
             _logger = logger;
+            _dbContext = dbcontext;
         }
         #endregion
 
@@ -93,6 +98,14 @@ namespace Andgasm.API.Core
         protected List<S> MapToResource<T, S>(List<T> rate)
         {
             return _datamap.Map<List<S>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+        }
+
+        public async Task<R> SaveChangesAndRemapResource<R, E>(R resource, E entity, Func<R, E, int> remapcallback) 
+        {
+            if (resource == null) resource = MapToResource<E, R>(entity);
+            await _dbContext.SaveChangesAsync();
+            remapcallback(resource, entity);
+            return resource;
         }
         #endregion
     }
