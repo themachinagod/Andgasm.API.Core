@@ -100,12 +100,54 @@ namespace Andgasm.API.Core
             return _datamap.Map<List<S>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
         }
 
-        public async Task<R> SaveChangesAndRemapResource<R, E>(R resource, E entity, Func<R, E, int> remapcallback) 
+        public async Task<R> SaveChangesAndRemapResource<R, E>(R resource, E entity, Func<R, E, int> remapcallback) where E : class
         {
+            UpdateDatabaseCollectionForOperation(entity);
             if (resource == null) resource = MapToResource<E, R>(entity);
             await _dbContext.SaveChangesAsync();
             remapcallback(resource, entity);
             return resource;
+        }
+
+        private void UpdateDatabaseCollectionForOperation<T>(T entity) where T : class
+        {
+            var optype = _dbContext.Entry(entity).State;
+            if (optype == EntityState.Added) _dbContext.Add(entity);
+            else if (optype == EntityState.Deleted) _dbContext.Remove(entity);
+        }
+        #endregion
+
+        #region Request Helpers
+        protected IActionResult InvalidIdBadRequest(int id)
+        {
+            return BadRequest($"The specified id '{id}' was not valid");
+        }
+
+        protected IActionResult NoPayloadBadRequest()
+        {
+            return BadRequest("No payload data was recieved to action the request");
+        }
+
+        protected IActionResult IdNotFound(int id)
+        {
+            return NotFound($"The specified id '{id}' was not found in the data store");
+        }
+
+        protected IActionResult PrimaryKeyConflict(int id)
+        {
+            return Conflict($"Cannot store to data store: Primary key '{id}' already exists!");
+        }
+        #endregion
+
+        #region Query Helpers
+        protected async Task<bool> EntityExists<T>(int id) where T : class
+        {
+            return await _dbContext.FindAsync<T>(id) != null;
+        }
+
+        protected async Task<T> GetEntityById<T>(int id) where T : class
+        {
+            return await _dbContext.FindAsync<T>(id);
         }
         #endregion
     }
