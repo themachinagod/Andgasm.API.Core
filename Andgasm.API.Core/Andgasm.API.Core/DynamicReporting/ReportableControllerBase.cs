@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Andgasm.API.Core
@@ -100,20 +102,25 @@ namespace Andgasm.API.Core
             return _datamap.Map<List<S>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
         }
 
-        public async Task<R> SaveChangesAndRemapResource<R, E>(R resource, E entity, Func<R, E, int> remapcallback) where E : class
+        public async Task<R> SaveChangesAndRemapResource<R, E>(R resource, E entity, EntityState optype, Func<R, E, int> partialremapcallback) where E : class
         {
-            UpdateDatabaseCollectionForOperation(entity);
-            if (resource == null) resource = MapToResource<E, R>(entity);
+            UpdateDatabaseCollectionForOperation(entity, optype);
             await _dbContext.SaveChangesAsync();
-            remapcallback(resource, entity);
+
+            // DBr: bit of a smell here... i would like ot just be able to remap the resource fully each time, however on updates associations may change and we 
+            //      may need access to the old value (example being contract volume changing the associated charge - deletion status of both charges needs to be reevaluated)
+            //      for now we will fully remap if removed or added but only map specific fields on update (this means we dont lose the PreEdit properties)
+
+            if (optype == EntityState.Added || optype == EntityState.Deleted) resource = MapToResource<E, R>(entity);
+            else partialremapcallback(resource, entity);
             return resource;
         }
 
-        private void UpdateDatabaseCollectionForOperation<T>(T entity) where T : class
+        private void UpdateDatabaseCollectionForOperation<T>(T entity, EntityState optype) where T : class
         {
-            var optype = _dbContext.Entry(entity).State;
             if (optype == EntityState.Added) _dbContext.Add(entity);
             else if (optype == EntityState.Deleted) _dbContext.Remove(entity);
+            else _dbContext.Entry(entity).State = EntityState.Modified;
         }
         #endregion
 
@@ -142,12 +149,19 @@ namespace Andgasm.API.Core
         #region Query Helpers
         protected async Task<bool> EntityExists<T>(int id) where T : class
         {
-            return await _dbContext.FindAsync<T>(id) != null;
+            return await _dbContext.EntityExists<T>(id);
         }
 
         protected async Task<T> GetEntityById<T>(int id) where T : class
         {
-            return await _dbContext.FindAsync<T>(id);
+            return await _dbContext.GetEntityById<T>(id);
+        }
+
+        protected async Task<TTarget> SetNullableNavigationProperty<TEntity, TTarget>(TEntity entity, Expression<Func<TEntity, TTarget>> navigationProperty,
+                                                                                                      Expression<Func<TTarget, bool>> query) where TEntity : class
+                                                                                                                                             where TTarget : class
+        {
+            return await _dbContext.SetNullableNavigationProperty(entity, navigationProperty, query);
         }
         #endregion
     }
