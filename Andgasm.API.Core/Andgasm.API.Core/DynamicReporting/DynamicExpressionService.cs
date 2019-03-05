@@ -18,7 +18,7 @@ namespace Andgasm.API.Core
         {
             ParameterExpression roottableExpression = Expression.Parameter(typeof(T), "p");
             MemberExpression propertyAccessExpression = CompilePropertyExpression<T>(propertypath, roottableExpression);
-            Expression valueExpression = Expression.ConvertChecked(Expression.Constant(filtervalue), filtervalue.GetType()); // TODO: this is a failure point due to potential garbage on request! Need to test for or catch!
+            Expression valueExpression = Expression.ConvertChecked(Expression.Constant(filtervalue), filtervalue.GetType()); // TODO: this is a potential failure point due to potential garbage on request! Need to test for or catch!
             return CompileWhereExpression(source, roottableExpression, propertyAccessExpression, valueExpression, filtertype);
         }
 
