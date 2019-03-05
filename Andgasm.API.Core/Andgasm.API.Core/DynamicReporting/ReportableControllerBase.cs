@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SE.ACT.API.Models;
+using SE.ACT.API.Resources;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,16 +48,24 @@ namespace Andgasm.API.Core
 
         protected IQueryable<T> GetQueryForFilter<T, S>(IQueryable<T> query, FilterOptions[] filters)
         {
-            foreach (var f in filters)
+            try
             {
-                var mappedPropertyName = GetDestinationPropertyFor<S, T>(_datamap, f.field);
-                if (mappedPropertyName != null)
+                foreach (var f in filters)
                 {
-                    query = _reporting.DynamicWhere(query, mappedPropertyName, f.value, f.@operator.ToString());
+
+                    var mappedPropertyName = GetDestinationPropertyFor<S, T>(_datamap, f.field);
+                    if (mappedPropertyName != null)
+                    {
+                        query = _reporting.DynamicWhere(query, mappedPropertyName, f.value, f.@operator);
+                    }
+                    else _logger.LogWarning($"Specified filter field '{f.field}' could not be mapped to the resource. Filter for field '{f.field}' has been ignored!");
                 }
-                else _logger.LogWarning($"Specified filter field '{f.field}' could not be mapped to the resource. Filter for field '{f.field}' has been ignored!");
+                return query;
             }
-            return query;
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         protected IQueryable<T> GetQueryForSort<T, S>(IQueryable<T> query, SortOptions[] sorts)
@@ -83,15 +93,33 @@ namespace Andgasm.API.Core
             if (mappedproperty != null)
             {
                 var mappedname = mappedproperty.Name;
-                var map = mapper.ConfigurationProvider.FindTypeMapFor<TSrc, TDst>();
-                var propertyMap = map.GetPropertyMaps().First(pm => pm.SourceMember.Name == mappedname);
-                return propertyMap.DestinationProperty.Name;
+                var map = mapper.ConfigurationProvider.FindTypeMapFor<TDst, TSrc>();
+                var propertyMap = map.PropertyMaps.FirstOrDefault(pm => pm.DestinationMember.Name == mappedname);
+                var filterattribute = propertyMap.DestinationMember.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(FilterAttribute));
+                if (filterattribute != null)
+                {
+                    var att = filterattribute.NamedArguments.FirstOrDefault(x => x.MemberName == "AlternativeColumntoFilter");
+                    if (att != null)
+                    {
+                        var ac = att.TypedValue.Value.ToString();
+                        return GetDestinationPropertyFor<TSrc, TDst>(mapper, ac);
+                    }
+                }
+                else if (propertyMap != null)
+                {
+                    return propertyMap.CustomMapExpression.Body.ToString().Replace("y.", "");
+                }
             }
             return null;
         }
         #endregion
 
         #region Mapping Helpers
+        protected S MapToResource<T, S>(T rate, S res)
+        {
+            return _datamap.Map(rate, res, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+        }
+
         protected S MapToResource<T, S>(T rate)
         {
             return _datamap.Map<S>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
@@ -99,20 +127,19 @@ namespace Andgasm.API.Core
 
         protected List<S> MapToResource<T, S>(List<T> rate)
         {
-            return _datamap.Map<List<S>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+            var mappedresources = _datamap.Map<List<S>>(rate, opt => opt.Items["Host"] = $"{Request.Scheme}://{Request.Host}");
+
+            return mappedresources;
         }
 
-        public async Task<R> SaveChangesAndRemapResource<R, E>(R resource, E entity, EntityState optype, Func<R, E, int> partialremapcallback) where E : class
+        public async Task<R> SaveChangesAndRemapResource<R, E>(R resource, E entity, EntityState optype, Func<R, E, string, Task<int>> remapcallback = null) where E : class
         {
             UpdateDatabaseCollectionForOperation(entity, optype);
             await _dbContext.SaveChangesAsync();
 
-            // DBr: bit of a smell here... i would like ot just be able to remap the resource fully each time, however on updates associations may change and we 
-            //      may need access to the old value (example being contract volume changing the associated charge - deletion status of both charges needs to be reevaluated)
-            //      for now we will fully remap if removed or added but only map specific fields on update (this means we dont lose the PreEdit properties)
-
             if (optype == EntityState.Added || optype == EntityState.Deleted) resource = MapToResource<E, R>(entity);
-            else partialremapcallback(resource, entity);
+            else MapToResource(entity, resource);
+            if (remapcallback != null) await remapcallback(resource, entity, optype.ToString().ToLowerInvariant());
             return resource;
         }
 
@@ -133,6 +160,16 @@ namespace Andgasm.API.Core
         protected IActionResult NoPayloadBadRequest()
         {
             return BadRequest("No payload data was recieved to action the request");
+        }
+
+        protected IActionResult NoTakeSpecifiedBadRequest()
+        {
+            return BadRequest("Request must specify number of records to retrieve in the take option, must be greater than 0!");
+        }
+
+        protected IActionResult NoSkipSpecifiedBadRequest()
+        {
+            return BadRequest("Request must specify number of records to retrieve in the take option, must be greater than 0!");
         }
 
         protected IActionResult IdNotFound(int id)

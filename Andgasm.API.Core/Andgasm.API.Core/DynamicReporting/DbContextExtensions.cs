@@ -14,7 +14,7 @@ namespace Andgasm.API.Core
                                                                                                                                     Expression<Func<TTarget, bool>> query) where TEntity : class
                                                                                                                                                                            where TTarget : class
         {
-            MemberExpression member = query.Body as MemberExpression;
+            MemberExpression member = navigationProperty.Body as MemberExpression;
             PropertyInfo pi = member.Member as PropertyInfo;
             var prevValue = (TTarget)pi.GetValue(entity);
             return await dbcontext.Set<TTarget>().FirstOrDefaultAsync(query);

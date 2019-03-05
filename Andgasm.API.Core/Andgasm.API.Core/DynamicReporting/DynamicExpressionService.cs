@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Andgasm.API.Core
 {
@@ -15,62 +14,12 @@ namespace Andgasm.API.Core
             _logger = logger;
         }
 
-        public IQueryable<T> DynamicWhere<T>(IQueryable<T> source, string columnName, object value, string filterType)
+        public IQueryable<T> DynamicWhere<T>(IQueryable<T> source, string propertypath, object filtervalue, FilterOperator filtertype)
         {
-            try
-            {
-                ParameterExpression table = Expression.Parameter(typeof(T), "obj");
-                Expression column = Expression.PropertyOrField(table, columnName);
-                Expression valueExpression = Expression.ConvertChecked(Expression.Constant(value), column.Type); // TODO: this is a failure point due to potential garbage on request! Need to test for or catch!
-                Expression where = null;
-                switch (filterType)
-                {
-                    case "neq":
-                        where = Expression.NotEqual(column, valueExpression);
-                        break;
-                    case "eq":
-                        where = Expression.Equal(column, valueExpression);
-                        break;
-                    case "lt":
-                        where = Expression.LessThan(column, valueExpression);
-                        break;
-                    case "lte":
-                        where = Expression.LessThanOrEqual(column, valueExpression);
-                        break;
-                    case "gt":
-                        where = Expression.GreaterThan(column, valueExpression);
-                        break;
-                    case "gte":
-                        where = Expression.GreaterThanOrEqual(column, valueExpression);
-                        break;
-                    case "contains":
-                        where = ExpressionFunction<T>(table, columnName, "Contains", value.ToString()).Body;
-                        break;
-                    case "startswith":
-                        where = ExpressionFunction<T>(table, columnName, "StartsWith", value.ToString()).Body;
-                        break;
-                    case "endswith":
-                        where = ExpressionFunction<T>(table, columnName, "EndsWith", value.ToString()).Body;
-                        break;
-                    default:
-                        _logger.LogWarning($"Specified filter function '{filterType}' is not supported by the dynamic expression service. Filter for field '{columnName}' has been ignored!");
-                        return source;
-                }
-                Expression lambda = Expression.Lambda(where, new ParameterExpression[] { table });
-                Type[] exprArgTypes = { source.ElementType };
-                MethodCallExpression methodCall = Expression.Call(typeof(Queryable),
-                                                                    "Where",
-                                                                    exprArgTypes,
-                                                                    source.Expression,
-                                                                    lambda);
-                return source.Provider.CreateQuery<T>(methodCall);
-            }
-            catch (Exception e)
-            {
-                // TODO: dont like this general catch all approach!
-                _logger.LogError(e, $"An exception was encountered trying to perform a dynamic filter: chances are this is related to an invalid type cast!!");
-                return source;
-            }
+            ParameterExpression roottableExpression = Expression.Parameter(typeof(T), "p");
+            MemberExpression propertyAccessExpression = CompilePropertyExpression<T>(propertypath, roottableExpression);
+            Expression valueExpression = Expression.ConvertChecked(Expression.Constant(filtervalue), filtervalue.GetType()); // TODO: this is a failure point due to potential garbage on request! Need to test for or catch!
+            return CompileWhereExpression(source, roottableExpression, propertyAccessExpression, valueExpression, filtertype);
         }
 
         public IQueryable<T> DynamicOrder<T>(IQueryable<T> source, string columnName, string direction)
@@ -88,13 +37,69 @@ namespace Andgasm.API.Core
             }
         }
 
-        static Expression<Func<T, bool>> ExpressionFunction<T>(ParameterExpression parameterExp, string propertyName, string funcname, string value)
+        protected MemberExpression CompilePropertyExpression<T>(string propertypath, ParameterExpression roottable)
         {
-            var propertyExp = Expression.Property(parameterExp, propertyName);
-            MethodInfo method = typeof(string).GetMethod(funcname, new[] { typeof(string) });
-            var someValue = Expression.Constant(value, typeof(string));
-            var containsMethodExp = Expression.Call(propertyExp, method, someValue);
-            return BinaryExpression.Lambda<Func<T, bool>>(containsMethodExp, parameterExp);
+            string[] columns = propertypath.Split('.');
+            var property = typeof(T).GetProperty(columns[0]);
+            var propertyAccess = Expression.MakeMemberAccess(roottable, property);
+            if (columns.Length > 1)
+            {
+                for (int i = 1; i < columns.Length; i++)
+                {
+                    propertyAccess = Expression.MakeMemberAccess(propertyAccess, propertyAccess.Type.GetProperty(columns[i]));
+                }
+            }
+            return propertyAccess;
+        }
+
+        protected string CompileFilterOperator(FilterOperator filterType)
+        {
+            string dataoperator = "Equal";
+            switch (filterType)
+            {
+                case FilterOperator.neq:
+                    dataoperator = "NotEqual";
+                    break;
+                case FilterOperator.eq:
+                    dataoperator = "Equal";
+                    break;
+                case FilterOperator.lt:
+                    dataoperator = "LessThan";
+                    break;
+                case FilterOperator.lte:
+                    dataoperator = "LessThanOrEqual";
+                    break;
+                case FilterOperator.gt:
+                    dataoperator = "GreaterThan";
+                    break;
+                case FilterOperator.gte:
+                    dataoperator = "GreaterThanOrEqual";
+                    break;
+                case FilterOperator.contains:
+                    dataoperator = "Contains";
+                    break;
+                case FilterOperator.startswith:
+                    dataoperator = "StartsWith";
+                    break;
+                case FilterOperator.endswith:
+                    dataoperator = "EndsWith";
+                    break;
+                default:
+                    _logger.LogWarning($"Specified filter function '{filterType}' is not supported by the dynamic expression service.");
+                    break;
+            }
+            return dataoperator;
+        }
+
+        protected IQueryable<T> CompileWhereExpression<T>(IQueryable<T> source, ParameterExpression roottable, MemberExpression propertyAccess, Expression valueExpression, FilterOperator filtertype)
+        {
+            Type[] types = new Type[2];
+            types.SetValue(typeof(Expression), 0);
+            types.SetValue(typeof(Expression), 1);
+            string dataoperator = CompileFilterOperator(filtertype);
+            var methodInfo = typeof(Expression).GetMethod(dataoperator, types);
+            var expression = (BinaryExpression)methodInfo.Invoke(null, new object[] { propertyAccess, valueExpression });
+            return source.Where(Expression.Lambda<Func<T, bool>>(expression, roottable));
         }
     }
 }

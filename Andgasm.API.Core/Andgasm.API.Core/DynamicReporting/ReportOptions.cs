@@ -1,5 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,6 +28,7 @@ namespace Andgasm.API.Core
         desc
     }
 
+    [TypeConverter(typeof(ReportOptionsConverter))]
     public class ReportOptions
     {
         public int skip { get; set; }
@@ -43,5 +48,54 @@ namespace Andgasm.API.Core
     {
         public string field { get; set; }
         public SortDirection dir { get; set; }
+    }
+
+
+    public class FilterConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            return true;
+        }
+
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            var pval = ((string)value);//.Replace("[", "").Replace("]", "");
+            return JsonConvert.DeserializeObject<FilterOptions[]>(pval, new JsonSerializerSettings
+            {
+                ContractResolver = new NoTypeConverterContractResolver<FilterOptions[]>(),
+            });
+        }
+    }
+
+    public class ReportOptionsConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            return true;
+        }
+
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            var pval = ((string)value);
+            return JsonConvert.DeserializeObject<ReportOptions>(pval, new JsonSerializerSettings
+            {
+                ContractResolver = new NoTypeConverterContractResolver<ReportOptions>(),
+            });
+        }
+    }
+
+    class NoTypeConverterContractResolver<T> : DefaultContractResolver
+    {
+        protected override JsonContract CreateContract(Type objectType)
+        {
+            if (typeof(T).IsAssignableFrom(objectType))
+            {
+                var contract = this.CreateObjectContract(objectType);
+                contract.Converter = null; 
+                return contract;
+            }
+            return base.CreateContract(objectType);
+        }
     }
 }

@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>0.0.14</Version>
+    <Version>0.0.15</Version>
     <Authors>Danny Brown</Authors>
     <Company>Andgasm Software Solutions</Company>
     <Description>The Andgasm API.Core library provides generalised base classes that can be utilised by any Web API controller;
@@ -24,9 +24,15 @@ Mapping Helpers</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="8.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="2.1.1" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\BitBucket\Repos\ACT\MC.Sys\SE.ACT.Entities\SE.ACT.Entities.csproj" />
   </ItemGroup>
 
 </Project>
