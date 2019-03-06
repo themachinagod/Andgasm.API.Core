@@ -75,7 +75,7 @@ namespace Andgasm.API.Core
                 var mappedPropertyName = GetDestinationPropertyFor<S, T>(_datamap, s.field);
                 if (mappedPropertyName != null)
                 {
-                    query = _reporting.DynamicOrder(query, mappedPropertyName, s.dir.ToString());
+                    query = _reporting.DynamicOrder(query, mappedPropertyName, s.dir);
                 }
                 else _logger.LogWarning($"Specified sort field '{s.field}' could not be mapped to the resource. Sort for field '{s.field}' has been ignored!");
             }

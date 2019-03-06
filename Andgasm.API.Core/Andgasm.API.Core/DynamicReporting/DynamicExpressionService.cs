@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Andgasm.API.Core
 {
@@ -22,19 +23,11 @@ namespace Andgasm.API.Core
             return CompileWhereExpression(source, roottableExpression, propertyAccessExpression, valueExpression, filtertype);
         }
 
-        public IQueryable<T> DynamicOrder<T>(IQueryable<T> source, string columnName, string direction)
+        public IQueryable<T> DynamicOrder<T>(IQueryable<T> source, string propertypath, SortDirection filtertype)
         {
-            var propertyInfo = typeof(T).GetProperty(columnName);
-            if (propertyInfo == null) return source;
-            switch (direction)
-            {
-                case "asc":
-                    return source.OrderBy(x => propertyInfo.GetValue(x, null));
-                case "desc":
-                    return source.OrderByDescending(x => propertyInfo.GetValue(x, null));
-                default:
-                    return source;
-            }
+            ParameterExpression roottableExpression = Expression.Parameter(typeof(T), "p");
+            MemberExpression propertyAccessExpression = CompilePropertyExpression<T>(propertypath, roottableExpression);
+            return CompileOrderExpression(source, roottableExpression, propertyAccessExpression, filtertype);
         }
 
         protected MemberExpression CompilePropertyExpression<T>(string propertypath, ParameterExpression roottable)
@@ -52,7 +45,7 @@ namespace Andgasm.API.Core
             return propertyAccess;
         }
 
-        protected string CompileFilterOperator(FilterOperator filterType)
+        protected string CompileFilterFunction(FilterOperator filterType)
         {
             string dataoperator = "Equal";
             switch (filterType)
@@ -96,10 +89,135 @@ namespace Andgasm.API.Core
             Type[] types = new Type[2];
             types.SetValue(typeof(Expression), 0);
             types.SetValue(typeof(Expression), 1);
-            string dataoperator = CompileFilterOperator(filtertype);
+            string dataoperator = CompileFilterFunction(filtertype);
             var methodInfo = typeof(Expression).GetMethod(dataoperator, types);
             var expression = (BinaryExpression)methodInfo.Invoke(null, new object[] { propertyAccess, valueExpression });
             return source.Where(Expression.Lambda<Func<T, bool>>(expression, roottable));
         }
+
+        protected IQueryable<T> CompileOrderExpression<T>(IQueryable<T> source, ParameterExpression roottable, MemberExpression propertyAccess, SortDirection sortdir)
+        {
+            // TODO: this is not how i want it done: tried with generics & expressions but hitting type issues
+            //       we need to get this into one block and kill the ifs - issue is the return type of column needs to be set at runtime which the below wont support
+            try
+            {
+                var t = propertyAccess.Type;
+                if (t == typeof(string))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, string>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, string>>(propertyAccess, roottable)); 
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(int))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, int>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, int>>(propertyAccess, roottable)); 
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(int?))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, int?>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, int?>>(propertyAccess, roottable)); 
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(decimal))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, decimal>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, decimal>>(propertyAccess, roottable)); 
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(decimal?))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, decimal?>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, decimal?>>(propertyAccess, roottable)); 
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(DateTime))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, DateTime>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, DateTime>>(propertyAccess, roottable)); 
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(DateTime?))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, DateTime?>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, DateTime?>>(propertyAccess, roottable));
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(bool))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, bool>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, bool>>(propertyAccess, roottable));
+                        default:
+                            return source;
+                    }
+                }
+                else if (t == typeof(bool?))
+                {
+                    switch (sortdir)
+                    {
+                        case SortDirection.asc:
+                            return source.OrderBy(Expression.Lambda<Func<T, bool?>>(propertyAccess, roottable));
+                        case SortDirection.desc:
+                            return source.OrderByDescending(Expression.Lambda<Func<T, bool?>>(propertyAccess, roottable)); 
+                        default:
+                            return source;
+                    }
+                }
+                return source;
+            }
+            catch(Exception ex)
+            {
+                return source;
+            }
+        }
+
+        
     }
 }
