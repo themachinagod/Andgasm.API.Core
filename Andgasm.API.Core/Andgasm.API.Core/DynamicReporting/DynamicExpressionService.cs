@@ -15,19 +15,56 @@ namespace Andgasm.API.Core
             _logger = logger;
         }
 
-        public IQueryable<T> DynamicWhere<T>(IQueryable<T> source, string propertypath, object filtervalue, FilterOperator filtertype)
+        public IQueryable<T> DynamicWhere<T>(IQueryable<T> source, string columnName, object value, FilterOperator filtertype)
         {
-            ParameterExpression roottableExpression = Expression.Parameter(typeof(T), "p");
-            MemberExpression propertyAccessExpression = CompilePropertyExpression<T>(propertypath, roottableExpression);
-            Expression valueExpression = Expression.ConvertChecked(Expression.Constant(filtervalue), filtervalue.GetType()); // TODO: this is a potential failure point due to potential garbage on request! Need to test for or catch!
-            return CompileWhereExpression(source, roottableExpression, propertyAccessExpression, valueExpression, filtertype);
+            try
+            {
+                ParameterExpression table = Expression.Parameter(typeof(T), "obj");
+                MemberExpression column = CompilePropertyExpression<T>(columnName, table);
+                Expression valueExpression = Expression.ConvertChecked(Expression.Constant(value), column.Type); // TODO: this is a failure point due to potential garbage on request! Need to test for or catch!
+                Expression where = CompileFilterFunction<T>(filtertype, table, column, valueExpression, value);
+                Expression lambda = Expression.Lambda(where, new ParameterExpression[] { table });
+                Type[] exprArgTypes = { source.ElementType };
+                MethodCallExpression methodCall = Expression.Call(typeof(Queryable),
+                                                                    "Where",
+                                                                    exprArgTypes,
+                                                                    source.Expression,
+                                                                    lambda);
+                return source.Provider.CreateQuery<T>(methodCall);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"An exception was encountered trying to perform a dynamic filter: chances are this is related to an invalid type cast!!");
+                return source;
+            }
         }
 
-        public IQueryable<T> DynamicOrder<T>(IQueryable<T> source, string propertypath, SortDirection filtertype)
+        public IQueryable<T> DynamicOrder<T>(IQueryable<T> source, string columnName, SortDirection filtertype)
         {
-            ParameterExpression roottableExpression = Expression.Parameter(typeof(T), "p");
-            MemberExpression propertyAccessExpression = CompilePropertyExpression<T>(propertypath, roottableExpression);
-            return CompileOrderExpression(source, roottableExpression, propertyAccessExpression, filtertype);
+            try
+            {
+                ParameterExpression table = Expression.Parameter(typeof(T), "obj");
+                MemberExpression column = CompilePropertyExpression<T>(columnName, table);
+                MethodInfo method = typeof(Queryable).GetMethods()
+                  .Where(m => m.Name == (filtertype ==  SortDirection.asc ? "OrderBy" : "OrderByDescending") && m.GetParameters().Length == 2)
+                  .Single();
+                MethodInfo concreteMethod = method.MakeGenericMethod(typeof(T), column.Type);
+                Expression orderBy = Expression.Lambda(column,table);
+                return (IQueryable<T>)concreteMethod.Invoke(null, new object[] { source, orderBy });
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"An exception was encountered trying to perform a dynamic sort: chances are this is related to an invalid type cast!!");
+                return source;
+            }
+        }
+
+        protected Expression<Func<T, bool>> ExpressionFunction<T>(ParameterExpression parameterExp, MemberExpression propertyExp, string funcname, string value)
+        {
+            MethodInfo method = typeof(string).GetMethod(funcname, new[] { typeof(string) });
+            var someValue = Expression.Constant(value, typeof(string));
+            var containsMethodExp = Expression.Call(propertyExp, method, someValue);
+            return BinaryExpression.Lambda<Func<T, bool>>(containsMethodExp, parameterExp);
         }
 
         protected MemberExpression CompilePropertyExpression<T>(string propertypath, ParameterExpression roottable)
@@ -45,179 +82,43 @@ namespace Andgasm.API.Core
             return propertyAccess;
         }
 
-        protected string CompileFilterFunction(FilterOperator filterType)
+        protected Expression CompileFilterFunction<T>(FilterOperator filtertype, ParameterExpression roottable, MemberExpression column, Expression valueExpression, object value)
         {
-            string dataoperator = "Equal";
-            switch (filterType)
+            Expression where = null;
+            switch (filtertype.ToString())
             {
-                case FilterOperator.neq:
-                    dataoperator = "NotEqual";
+                case "neq":
+                    where = Expression.NotEqual(column, valueExpression);
                     break;
-                case FilterOperator.eq:
-                    dataoperator = "Equal";
+                case "eq":
+                    where = Expression.Equal(column, valueExpression);
                     break;
-                case FilterOperator.lt:
-                    dataoperator = "LessThan";
+                case "lt":
+                    where = Expression.LessThan(column, valueExpression);
                     break;
-                case FilterOperator.lte:
-                    dataoperator = "LessThanOrEqual";
+                case "lte":
+                    where = Expression.LessThanOrEqual(column, valueExpression);
                     break;
-                case FilterOperator.gt:
-                    dataoperator = "GreaterThan";
+                case "gt":
+                    where = Expression.GreaterThan(column, valueExpression);
                     break;
-                case FilterOperator.gte:
-                    dataoperator = "GreaterThanOrEqual";
+                case "gte":
+                    where = Expression.GreaterThanOrEqual(column, valueExpression);
                     break;
-                case FilterOperator.contains:
-                    dataoperator = "Contains";
+                case "contains":
+                    where = ExpressionFunction<T>(roottable, column, "Contains", value.ToString()).Body;
                     break;
-                case FilterOperator.startswith:
-                    dataoperator = "StartsWith";
+                case "startswith":
+                    where = ExpressionFunction<T>(roottable, column, "StartsWith", value.ToString()).Body;
                     break;
-                case FilterOperator.endswith:
-                    dataoperator = "EndsWith";
+                case "endswith":
+                    where = ExpressionFunction<T>(roottable, column, "EndsWith", value.ToString()).Body;
                     break;
                 default:
-                    _logger.LogWarning($"Specified filter function '{filterType}' is not supported by the dynamic expression service.");
+                    _logger.LogWarning($"Specified filter function '{filtertype}' is not supported by the dynamic expression service. Filter for field '{column.Member.Name}' has been ignored!");
                     break;
             }
-            return dataoperator;
+            return where;
         }
-
-        protected IQueryable<T> CompileWhereExpression<T>(IQueryable<T> source, ParameterExpression roottable, MemberExpression propertyAccess, Expression valueExpression, FilterOperator filtertype)
-        {
-            Type[] types = new Type[2];
-            types.SetValue(typeof(Expression), 0);
-            types.SetValue(typeof(Expression), 1);
-            string dataoperator = CompileFilterFunction(filtertype);
-            var methodInfo = typeof(Expression).GetMethod(dataoperator, types);
-            var expression = (BinaryExpression)methodInfo.Invoke(null, new object[] { propertyAccess, valueExpression });
-            return source.Where(Expression.Lambda<Func<T, bool>>(expression, roottable));
-        }
-
-        protected IQueryable<T> CompileOrderExpression<T>(IQueryable<T> source, ParameterExpression roottable, MemberExpression propertyAccess, SortDirection sortdir)
-        {
-            // TODO: this is not how i want it done: tried with generics & expressions but hitting type issues
-            //       we need to get this into one block and kill the ifs - issue is the return type of column needs to be set at runtime which the below wont support
-            try
-            {
-                var t = propertyAccess.Type;
-                if (t == typeof(string))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, string>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, string>>(propertyAccess, roottable)); 
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(int))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, int>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, int>>(propertyAccess, roottable)); 
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(int?))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, int?>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, int?>>(propertyAccess, roottable)); 
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(decimal))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, decimal>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, decimal>>(propertyAccess, roottable)); 
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(decimal?))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, decimal?>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, decimal?>>(propertyAccess, roottable)); 
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(DateTime))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, DateTime>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, DateTime>>(propertyAccess, roottable)); 
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(DateTime?))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, DateTime?>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, DateTime?>>(propertyAccess, roottable));
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(bool))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, bool>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, bool>>(propertyAccess, roottable));
-                        default:
-                            return source;
-                    }
-                }
-                else if (t == typeof(bool?))
-                {
-                    switch (sortdir)
-                    {
-                        case SortDirection.asc:
-                            return source.OrderBy(Expression.Lambda<Func<T, bool?>>(propertyAccess, roottable));
-                        case SortDirection.desc:
-                            return source.OrderByDescending(Expression.Lambda<Func<T, bool?>>(propertyAccess, roottable)); 
-                        default:
-                            return source;
-                    }
-                }
-                return source;
-            }
-            catch(Exception ex)
-            {
-                return source;
-            }
-        }
-
-        
     }
 }
