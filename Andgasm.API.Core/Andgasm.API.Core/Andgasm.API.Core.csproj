@@ -26,15 +26,12 @@ DBContext Helpers</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Andgasm.Resources.Core" Version="0.0.1" />
     <PackageReference Include="AutoMapper" Version="8.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="2.1.1" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.0.11" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\BitBucket\Repos\ACT\MC.Sys\SE.ACT.Entities\SE.ACT.Entities.csproj" />
   </ItemGroup>
 
 </Project>

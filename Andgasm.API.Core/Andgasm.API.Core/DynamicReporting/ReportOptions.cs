@@ -50,7 +50,6 @@ namespace Andgasm.API.Core
         public SortDirection dir { get; set; }
     }
 
-
     public class FilterConverter : TypeConverter
     {
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)

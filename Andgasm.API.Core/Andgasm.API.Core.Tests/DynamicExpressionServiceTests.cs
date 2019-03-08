@@ -21,7 +21,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidEqualsRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property1", "test1", "eq");
+            var result = _svc.DynamicWhere(_testsource, "Property1", "test1", FilterOperator.eq);
             Assert.Single(result);
             Assert.Equal("test1", result.First().Property1);
         }
@@ -29,7 +29,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidNotEqualsRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property1", "test1", "neq");
+            var result = _svc.DynamicWhere(_testsource, "Property1", "test1", FilterOperator.neq);
             Assert.Single(result);
             Assert.Equal("test2", result.First().Property1);
         }
@@ -37,7 +37,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidContainsRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property1", "st1", "contains");
+            var result = _svc.DynamicWhere(_testsource, "Property1", "st1", FilterOperator.contains);
             Assert.Single(result);
             Assert.Equal("test1", result.First().Property1);
         }
@@ -45,14 +45,14 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidStartsWithRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property1", "test", "startswith");
+            var result = _svc.DynamicWhere(_testsource, "Property1", "test", FilterOperator.startswith);
             Assert.Equal(2, result.Count());
         }
 
         [Fact]
         public void DynamicWhere_ValidEndsWithRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property1", "st1", "endswith");
+            var result = _svc.DynamicWhere(_testsource, "Property1", "st1", FilterOperator.endswith);
             Assert.Single(result);
             Assert.Equal("test1", result.First().Property1);
         }
@@ -60,7 +60,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidGreaterThanRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property3", 1, "gt");
+            var result = _svc.DynamicWhere(_testsource, "Property3", 1, FilterOperator.gt);
             Assert.Single(result);
             Assert.Equal("test2", result.First().Property1);
         }
@@ -68,7 +68,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidGreaterThanEqualsRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property3", 2, "gte");
+            var result = _svc.DynamicWhere(_testsource, "Property3", 2, FilterOperator.gte);
             Assert.Single(result);
             Assert.Equal("test2", result.First().Property1);
         }
@@ -76,7 +76,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidLessThanRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property3", 2, "lt");
+            var result = _svc.DynamicWhere(_testsource, "Property3", 2, FilterOperator.lt);
             Assert.Single(result);
             Assert.Equal("test1", result.First().Property1);
         }
@@ -84,7 +84,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_ValidLessThanEqualsRequest()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property3", 1, "lte");
+            var result = _svc.DynamicWhere(_testsource, "Property3", 1, FilterOperator.lte);
             Assert.Single(result);
             Assert.Equal("test1", result.First().Property1);
         }
@@ -92,21 +92,21 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicWhere_InvalidRequest_BadProperty()
         {
-            var result = _svc.DynamicWhere(_testsource, "badproperty", "avalue", "eq");
+            var result = _svc.DynamicWhere(_testsource, "badproperty", "avalue", FilterOperator.eq);
             Assert.Equal(2, result.Count());
         }
 
         [Fact]
         public void DynamicWhere_InvalidRequest_BadOperation()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property1", "avalue", "badop");
+            var result = _svc.DynamicWhere(_testsource, "Property1", "avalue", FilterOperator.eq); // DBr: dont have bad enum val
             Assert.Equal(2, result.Count());
         }
 
         [Fact]
         public void DynamicWhere_InvalidRequest_BadValueType()
         {
-            var result = _svc.DynamicWhere(_testsource, "Property3", "badval", "eq");
+            var result = _svc.DynamicWhere(_testsource, "Property3", "badval", FilterOperator.eq); // DBr: dont have bad enum val
             Assert.Equal(2, result.Count());
         }
         #endregion
@@ -116,7 +116,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicOrder_ValidAscendingRequest()
         {
-            var result = _svc.DynamicOrder(_testsource, "Property1", "asc");
+            var result = _svc.DynamicOrder(_testsource, "Property1", SortDirection.asc);
             Assert.Equal(2, result.Count());
             Assert.Equal("test1", result.First().Property1);
             Assert.Equal("test2", result.Last().Property1);
@@ -125,7 +125,7 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicOrder_ValidDescendingRequest()
         {
-            var result = _svc.DynamicOrder(_testsource, "Property1", "desc");
+            var result = _svc.DynamicOrder(_testsource, "Property1", SortDirection.desc);
             Assert.Equal(2, result.Count());
             Assert.Equal("test2", result.First().Property1);
             Assert.Equal("test1", result.Last().Property1);
@@ -134,14 +134,14 @@ namespace Andgasm.API.Core.Tests
         [Fact]
         public void DynamicOrder_InvalidRequest_BadDirection()
         {
-            var result = _svc.DynamicOrder(_testsource, "Property1", "baddir");
+            var result = _svc.DynamicOrder(_testsource, "Property1", SortDirection.asc); // DBr: dont have bad enum val
             Assert.Equal(2, result.Count());
         }
 
         [Fact]
         public void DynamicOrder_InvalidRequest_BadProperty()
         {
-            var result = _svc.DynamicOrder(_testsource, "badproperty", "baddir");
+            var result = _svc.DynamicOrder(_testsource, "badproperty", SortDirection.asc); // DBr: dont have bad enum val
             Assert.Equal(2, result.Count());
         }
         #endregion
