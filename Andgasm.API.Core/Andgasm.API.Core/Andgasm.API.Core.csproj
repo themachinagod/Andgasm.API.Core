@@ -9,29 +9,28 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Danny Brown</Authors>
     <Company>Andgasm Software Solutions</Company>
     <Description>The Andgasm API.Core library provides generalised base classes that can be utilised by any Web API controller;
-Dynamic Expression Parsing (Filters &amp; Sorts)
-Mapping Helpers
-DBContext Helpers</Description>
+Request helpers</Description>
     <Copyright>Andgasm Software Solutions</Copyright>
-    <PackageTags>AspNetCore, API, Base, Reportable, EventGrid, Dynamics, Expressions, Mapping, DBContext</PackageTags>
+    <PackageTags>AspNetCore, API, Base</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/themachinagod/Andgasm.API.Core</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
-    <PackageReleaseNotes>Alpha release: now supports nested propery filters &amp; sorts.</PackageReleaseNotes>
+    <PackageReleaseNotes>Simplified - functionality moved to single ervices.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Andgasm.Resources.Core" Version="0.0.1" />
-    <PackageReference Include="AutoMapper" Version="8.0.0" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="5.0.1" />
+    <Compile Remove="DynamicReporting\**" />
+    <EmbeddedResource Remove="DynamicReporting\**" />
+    <None Remove="DynamicReporting\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="2.1.1" />
-    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.0.11" />
   </ItemGroup>
 
 </Project>

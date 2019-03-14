@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.28010.2041
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Andgasm.API.Core", "Andgasm.API.Core\Andgasm.API.Core.csproj", "{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Andgasm.API.Core.Tests", "Andgasm.API.Core.Tests\Andgasm.API.Core.Tests.csproj", "{C0740905-D9E2-492E-AC3B-E02E3CE278BE}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Artifacts", "Artifacts", "{8A8B7509-7D80-44AB-A60B-B41B4C9FD7A8}"
 	ProjectSection(SolutionItems) = preProject
 		..\README.md = ..\README.md
@@ -22,10 +20,6 @@ Global
 		{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3603BE8E-9182-4CB6-88CA-5CC0F94B09D9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C0740905-D9E2-492E-AC3B-E02E3CE278BE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
